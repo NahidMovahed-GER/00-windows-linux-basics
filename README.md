@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# Netzwerk Basics
-=======
 # Windows & Linux Basics
->>>>>>> cb7dc80 (README aktualisiert)
 
 Dieses Projekt zeigt grundlegende Aufgaben, die im IT-Betrieb täglich vorkommen:
 Benutzer verwalten, Rechte setzen, Dienste prüfen und Logs auslesen.
