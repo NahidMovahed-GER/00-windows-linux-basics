@@ -1,132 +1,149 @@
+<<<<<<< HEAD
 # Netzwerk Basics
+=======
+# Windows & Linux Basics
+>>>>>>> cb7dc80 (README aktualisiert)
 
-Dieses Projekt zeigt meine praktischen Grundlagen im Netzwerkbereich.  
-Ich habe die wichtigsten Befehle in Linux ausprobiert, um IP-Adressen, DNS, Ports und Verbindungen zu verstehen.  
-Diese Themen gehören zu typischen Aufgaben im IT-Betrieb und in der Systemintegration.
+Dieses Projekt zeigt grundlegende Aufgaben, die im IT-Betrieb täglich vorkommen:
+Benutzer verwalten, Rechte setzen, Dienste prüfen und Logs auslesen.
+Alle Beispiele funktionieren auf Windows und Linux und bilden eine praktische Basis für Support und Systemintegration.
 
----
+## Inhalte des Projekts
 
-## Zweck des Projekts
+* Windows: Benutzer, Ordner, Rechte, Dienste, Event Viewer
+* Linux: Dateien anlegen, Rechte ändern, Rechte verstehen, Benutzer anlegen, Dienste und Logs prüfen
 
-Ich wollte verstehen, wie man:
-
-- die IP-Adresse eines Systems prüft  
-- testet, ob das Netzwerk funktioniert  
-- DNS-Abfragen macht (Domain → IP)  
-- Internetverbindungen prüft  
-- Ports und Dienste kontrolliert  
-
-Diese Grundlagen helfen bei Fehleranalyse, Betrieb und Dokumentation von IT-Services.
-
----
-
-## Umgebung
-
-Ich nutze einen Ubuntu-Linux-Container:
-
+# Windows
+### Benutzer anlegen
 ```
-docker run -it ubuntu bash
-
+net user testuser MeinPasswort123! /add
 ```
-Damit habe ich eine saubere Testumgebung, ohne extra ein Linux installieren zu müssen.
 
-## 1. IP-Adresse anzeigen
+### Benutzer der Gruppe „Administratoren“ hinzufügen
+```
+net localgroup administrators testuser /add
+```
 
-Zuerst habe ich das Paket iproute2 installiert:
+### Ordner erstellen
+```
+mkdir C:\TestOrdner
+```
+
+### NTFS-Rechte anzeigen
+```
+icacls C:\TestOrdner
+```
+
+### NTFS-Rechte vergeben
+```
+icacls C:\TestOrdner /grant testuser:(R)
+```
+*(R = Read / Lesen)*
+
+### Dienste prüfen
+
+Beispiel: Druckwarteschlange
+```
+Get-Service spooler
+```
+
+Starten/Stoppen:
+```
+Start-Service spooler
+Stop-Service spooler
+```
+### Windows Logs anzeigen (Event Viewer)
+
+**1.** Start → „Event Viewer“
+
+**2.** Windows Logs → *Application / System*
+
+**3.** Fehler/Meldungen lesen
+
+Damit erkennt man typische Probleme (z. B. Dienstfehler, Anmeldefehler).
+
+# Linux
+### System aktualisieren (wichtig!)
+
+Docker-Ubuntu ist minimal – also müssen Tools erst installiert werden.
 ```
 apt update
-apt install iproute2 -y
+apt install adduser nano iputils-ping
 ```
 
-Dann kann man die Netzwerkinterfaces sehen:
+### Datei anlegen
 ```
-ip a
-```
-
-Ergebnis:
-
-- lo (127.0.0.1) = Loopback, System spricht mit sich selbst
-
-- eth0 (z. B. 172.17.0.2) = die IP des Containers im Docker-Netzwerk
-
-Das zeigt, ob das Netzwerk aktiv ist.
-
-## 2. Internet-Verbindung testen (Ping)
-
-Ich habe Ping installiert:
-```
-apt install iputils-ping -y
-```
-**Beispiel 1: Internet erreichbar?**
-```
-ping -c 4 8.8.8.8
+touch test.txt
 ```
 
-8.8.8.8 ist ein öffentlicher DNS-Server von Google.
-Wenn der Ping klappt → Internetverbindung funktioniert.
-
-**Beispiel 2: DNS funktioniert?**
+### Datei anzeigen
 ```
-ping -c 4 google.com
-ping -c 4 amazon.de
+ls -l test.txt
 ```
 
-## 3. DNS-Abfragen (nslookup, dig, host)
+### Rechte ändern
+```
+chmod 600 test.txt
+```
+### Bedeutung von 600
 
-Ich habe die DNS-Tools installiert:
-```
-apt install dnsutils -y
-```
-**nslookup**
-```
-nslookup amazon.de
-```
+* Besitzer: **6** (4 + 2 = lesen + schreiben)
+* Gruppe: **0**
+* Andere: **0**
 
-Zeigt die IP-Adresse, die der DNS-Server zurückgibt.
+### Rechte-Berechnung
 
-**dig**
-```
-dig amazon.de
-```
+| Buchstabe | Bedeutung | Zahl |
+| :--- | :--- | :--- |
+| r | lesen | 4 |
+| w | schreiben | 2 |
+| x | ausführen | 1 |
 
-Zeigt Details wie TTL (Gültigkeitsdauer eines DNS-Eintrags).
-
-**host**
+Beispiele:
 ```
-host amazon.de
+chmod 644 datei.txt   # Besitzer: rw-, Gruppe: r--, Andere: r--
+chmod 700 script.sh   # Besitzer: rwx, Gruppe: ---, Andere: ---
 ```
-
-Zeigt kurz die IPv4- oder IPv6-Adressen.
-
-**DNS ist wichtig**, um zu verstehen, wie Systeme im Netzwerk gefunden werden.
-
-## 4. Ports und Verbindungen prüfen
-
-Ich habe das Paket net-tools installiert:
+### Benutzer anlegen
 ```
-apt install net-tools -y
+adduser demo
 ```
-**Offene Verbindungen anzeigen:**
+Beim Anlegen fragt Linux optional nach Name, Telefon usw.
+Diese Felder gehören zum GECOS-Feld – alles optional.
+Man kann einfach mit ENTER bestätigen.
+
+### Benutzergruppen prüfen
 ```
-netstat -tulnp
+id demo
 ```
 
-Damit sieht man:
-
-- welche Dienste laufen
-- welche Ports benutzt werden
-- welcher Prozess dahinter steckt
-
-Das hilft bei Fehlern wie „Dienst erreichbar / nicht erreichbar“.
-
-## 5. Mini-Firewall-Beispiel
-
-Mit ufw könnte man Regeln setzen (nur Beispiel, nicht im Container aktiviert):
+### Dienste prüfen (z. B. SSH)
+*(Achtung: Im Docker-Container funktioniert systemctl nicht, weil kein systemd vorhanden ist.)*
 ```
-ufw allow 80/tcp
-ufw deny 22/tcp
+systemctl status ssh
 ```
 
-Damit versteht man Grundprinzipien einer Firewall (erlauben/blockieren).
+### Starten/Stoppen:
+```
+systemctl start ssh
+systemctl stop ssh
+```
 
-Wenn Domains funktionieren → DNS löst Namen in IP-Adressen um.
+### Logs anzeigen
+```
+journalctl -xe
+```
+
+Damit sieht man Fehler beim Starten von Diensten oder Systemprobleme.
+
+### Fazit
+
+Dieses Projekt zeigt grundlegende Fähigkeiten, die in Systemintegration, Support und IT-Betrieb täglich gebraucht werden:
+
+* Benutzer anlegen und verwalten
+* Rechte verstehen und setzen
+* Dienste prüfen
+* Logs lesen
+* Grundbefehle unter Windows und Linux sicher anwenden
+
+Es bildet die Grundlage für Netzwerk-, Cloud- und Container-Themen.
